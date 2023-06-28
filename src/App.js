@@ -47,7 +47,7 @@ function App() {
   // Convert the time obtained from the video to HH:MM:SS format
   const convertToHHMMSS = (val) => {
     const secNum = parseInt(val, 10);
-    let milliseconds = Math.floor((val % 1) * 1000);
+    const milliseconds = Math.floor((val % 1) * 1000);
     let hours = Math.floor(secNum / 3600);
     let minutes = Math.floor((secNum - hours * 3600) / 60);
     let seconds = secNum - hours * 3600 - minutes * 60;
@@ -61,23 +61,20 @@ function App() {
     if (seconds < 10) {
       seconds = "0" + seconds;
     }
+
+    // Format milliseconds with leading zeros
+    let formattedMilliseconds = ("00" + milliseconds).slice(-3);
+
     let time;
 
-    // Add milliseconds if they are present
-    if (milliseconds > 0) {
-      if (hours === "00") {
-        time = minutes + ":" + seconds + "." + milliseconds;
-      } else {
-        time = hours + ":" + minutes + ":" + seconds + "." + milliseconds;
-      }
+    // Display hours, minutes, seconds, and milliseconds
+    if (hours === "00") {
+      time = minutes + ":" + seconds + "." + formattedMilliseconds;
     } else {
-      // Only display hours, minutes, and seconds
-      if (hours === "00") {
-        time = minutes + ":" + seconds;
-      } else {
-        time = hours + ":" + minutes + ":" + seconds;
-      }
+      time =
+        hours + ":" + minutes + ":" + seconds + "." + formattedMilliseconds;
     }
+
     return time;
   };
 
