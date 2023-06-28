@@ -4,7 +4,6 @@ import "nouislider/distribute/nouislider.css";
 import "./App.css";
 
 let ffmpeg; // Store the ffmpeg instance
-
 function App() {
   const [videoDuration, setVideoDuration] = useState(0);
   const [endTime, setEndTime] = useState(0);
@@ -34,6 +33,18 @@ function App() {
         console.log("Script failed to load");
       };
       document.getElementsByTagName("head")[0].appendChild(script);
+    });
+  };
+
+  // Fetch file helper function
+  const fetchFile = async (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve(new Uint8Array(reader.result));
+      };
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
     });
   };
 
@@ -85,8 +96,10 @@ function App() {
       "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/ffmpeg.min.js"
     ).then(() => {
       if (typeof window !== "undefined") {
-        // Create an ffmpeg instance.
-        ffmpeg = window.FFmpeg();
+        // creates an ffmpeg instance.
+        ffmpeg = window.FFmpeg.createFFmpeg({ log: true });
+        // Load ffmpeg.wasm-core script
+        ffmpeg.load();
         // Set true that the script is loaded
         setIsScriptLoaded(true);
       }
@@ -152,9 +165,13 @@ function App() {
     if (isScriptLoaded) {
       const { name, type } = videoFileValue;
       // Write video to memory
-      ffmpeg.FS("writeFile", name, await fetchFile(videoFileValue));
+      ffmpeg.FS(
+        "writeFile",
+        name,
+        await fetchFile(videoFileValue) // Use fetchFile helper function
+      );
       const videoFileType = type.split("/")[1];
-      // Run the ffmpeg command to trim the video
+      // Run the ffmpeg command to trim video
       await ffmpeg.run(
         "-i",
         name,
@@ -168,7 +185,7 @@ function App() {
         "copy",
         `out.${videoFileType}`
       );
-      // Convert data to a URL and store it in the videoTrimmedUrl state
+      // Convert data to url and store it in videoTrimmedUrl state
       const data = ffmpeg.FS("readFile", `out.${videoFileType}`);
       const url = URL.createObjectURL(
         new Blob([data.buffer], { type: videoFileValue.type })
