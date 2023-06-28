@@ -4,6 +4,7 @@ import "nouislider/distribute/nouislider.css";
 import "./App.css";
 
 let ffmpeg; // Store the ffmpeg instance
+
 function App() {
   const [videoDuration, setVideoDuration] = useState(0);
   const [endTime, setEndTime] = useState(0);
@@ -15,40 +16,17 @@ function App() {
   const videoRef = useRef();
   let initialSliderValue = 0;
 
-  // Created to load script by passing the required script and append in head tag
-  const loadScript = (src) => {
-    return new Promise((onFulfilled, _) => {
-      const script = document.createElement("script");
-      let loaded;
-      script.async = "async";
-      script.defer = "defer";
-      script.setAttribute("src", src);
-      script.onreadystatechange = script.onload = () => {
-        if (!loaded) {
-          onFulfilled(script);
-        }
-        loaded = true;
-      };
-      script.onerror = function () {
-        console.log("Script failed to load");
-      };
-      document.getElementsByTagName("head")[0].appendChild(script);
-    });
-  };
-
-  // Fetch file helper function
+  // Fetch the file and return as ArrayBuffer
   const fetchFile = async (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        resolve(new Uint8Array(reader.result));
+        resolve(reader.result);
       };
       reader.onerror = reject;
       reader.readAsArrayBuffer(file);
     });
-  };
-
-  // Handle Upload of the video
+  }; // Handle Upload of the video
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     const blobURL = URL.createObjectURL(file);
@@ -92,18 +70,18 @@ function App() {
 
   useEffect(() => {
     // Load the ffmpeg script
-    loadScript(
-      "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/ffmpeg.min.js"
-    ).then(() => {
+    const loadFFmpeg = async () => {
       if (typeof window !== "undefined") {
-        // creates an ffmpeg instance.
-        ffmpeg = window.FFmpeg.createFFmpeg({ log: true });
-        // Load ffmpeg.wasm-core script
-        ffmpeg.load();
+        // Import the ffmpeg library from your local file system
+        ffmpeg = await import("@ffmpeg/ffmpeg");
+        // Create an instance of ffmpeg
+        ffmpeg = ffmpeg.createFFmpeg({ log: true });
         // Set true that the script is loaded
         setIsScriptLoaded(true);
       }
-    });
+    };
+
+    loadFFmpeg();
   }, []);
 
   // Get the duration of the video using videoRef
@@ -165,11 +143,7 @@ function App() {
     if (isScriptLoaded) {
       const { name, type } = videoFileValue;
       // Write video to memory
-      ffmpeg.FS(
-        "writeFile",
-        name,
-        await fetchFile(videoFileValue) // Use fetchFile helper function
-      );
+      ffmpeg.FS("writeFile", name, await fetchFile(videoFileValue));
       const videoFileType = type.split("/")[1];
       // Run the ffmpeg command to trim video
       await ffmpeg.run(
@@ -185,7 +159,7 @@ function App() {
         "copy",
         `out.${videoFileType}`
       );
-      // Convert data to url and store it in videoTrimmedUrl state
+      // Convert data to URL and store in videoTrimmedUrl state
       const data = ffmpeg.FS("readFile", `out.${videoFileType}`);
       const url = URL.createObjectURL(
         new Blob([data.buffer], { type: videoFileValue.type })
