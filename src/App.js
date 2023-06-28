@@ -44,9 +44,10 @@ function App() {
     setVideoSrc(blobURL);
   };
 
-  //Convert the time obtained from the video to HH:MM:SS format
+  // Convert the time obtained from the video to HH:MM:SS format
   const convertToHHMMSS = (val) => {
     const secNum = parseInt(val, 10);
+    let milliseconds = Math.floor((val % 1) * 1000);
     let hours = Math.floor(secNum / 3600);
     let minutes = Math.floor((secNum - hours * 3600) / 60);
     let seconds = secNum - hours * 3600 - minutes * 60;
@@ -61,11 +62,21 @@ function App() {
       seconds = "0" + seconds;
     }
     let time;
-    // only mm:ss
-    if (hours === "00") {
-      time = minutes + ":" + seconds;
+
+    // Add milliseconds if they are present
+    if (milliseconds > 0) {
+      if (hours === "00") {
+        time = minutes + ":" + seconds + "." + milliseconds;
+      } else {
+        time = hours + ":" + minutes + ":" + seconds + "." + milliseconds;
+      }
     } else {
-      time = hours + ":" + minutes + ":" + seconds;
+      // Only display hours, minutes, and seconds
+      if (hours === "00") {
+        time = minutes + ":" + seconds;
+      } else {
+        time = hours + ":" + minutes + ":" + seconds;
+      }
     }
     return time;
   };
@@ -179,7 +190,12 @@ function App() {
       <br />
       {videoSrc.length ? (
         <React.Fragment>
-          <video src={videoSrc} ref={videoRef} onTimeUpdate={handlePauseVideo}>
+          <video
+            src={videoSrc}
+            ref={videoRef}
+            onTimeUpdate={handlePauseVideo}
+            height={480}
+          >
             <source src={videoSrc} type={videoFileValue.type} />
           </video>
           <br />
@@ -198,11 +214,11 @@ function App() {
           {convertToHHMMSS(endTime)}
           <br />
           <button onClick={handlePlay}>Play</button> &nbsp;
-          <button onClick={handlePause}>Play</button> &nbsp;
+          <button onClick={handlePause}>Pause</button> &nbsp;
           <button onClick={handleTrim}>Trim</button>
           <br />
           {videoTrimmedUrl && (
-            <video controls>
+            <video controls height={480}>
               <source src={videoTrimmedUrl} type={videoFileValue.type} />
             </video>
           )}
