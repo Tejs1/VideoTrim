@@ -3,7 +3,8 @@ import Nouislider from "nouislider-react";
 import "nouislider/distribute/nouislider.css";
 import "./App.css";
 
-let ffmpeg; //Store the ffmpeg instance
+let ffmpeg; // Store the ffmpeg instance
+
 function App() {
   const [videoDuration, setVideoDuration] = useState(0);
   const [endTime, setEndTime] = useState(0);
@@ -15,7 +16,7 @@ function App() {
   const videoRef = useRef();
   let initialSliderValue = 0;
 
-  //Created to load script by passing the required script and append in head tag
+  // Created to load script by passing the required script and append in head tag
   const loadScript = (src) => {
     return new Promise((onFulfilled, _) => {
       const script = document.createElement("script");
@@ -36,7 +37,7 @@ function App() {
     });
   };
 
-  //Handle Upload of the video
+  // Handle Upload of the video
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     const blobURL = URL.createObjectURL(file);
@@ -46,7 +47,7 @@ function App() {
 
   // Convert the time obtained from the video to HH:MM:SS format
   const convertToHHMMSS = (val) => {
-    const secNum = parseInt(val, 10);
+    const secNum = Math.floor(val);
     const milliseconds = Math.floor((val % 1) * 1000);
     let hours = Math.floor(secNum / 3600);
     let minutes = Math.floor((secNum - hours * 3600) / 60);
@@ -79,22 +80,20 @@ function App() {
   };
 
   useEffect(() => {
-    //Load the ffmpeg script
+    // Load the ffmpeg script
     loadScript(
-      "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.2/dist/ffmpeg.min.js"
+      "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/ffmpeg.min.js"
     ).then(() => {
       if (typeof window !== "undefined") {
-        // creates a ffmpeg instance.
-        ffmpeg = window.FFmpeg.createFFmpeg({ log: true });
-        //Load ffmpeg.wasm-core script
-        ffmpeg.load();
-        //Set true that the script is loaded
+        // Create an ffmpeg instance.
+        ffmpeg = window.FFmpeg();
+        // Set true that the script is loaded
         setIsScriptLoaded(true);
       }
     });
   }, []);
 
-  //Get the duration of the video using videoRef
+  // Get the duration of the video using videoRef
   useEffect(() => {
     if (videoRef && videoRef.current) {
       const currentVideo = videoRef.current;
@@ -105,7 +104,7 @@ function App() {
     }
   }, [videoSrc]);
 
-  //Called when handle of the nouislider is being dragged
+  // Called when the handle of the nouislider is being dragged
   const updateOnSliderChange = (values, handle) => {
     setVideoTrimmedUrl("");
     let readValue;
@@ -126,19 +125,20 @@ function App() {
     }
   };
 
-  //Play the video when the button is clicked
+  // Play the video when the button is clicked
   const handlePlay = () => {
     if (videoRef && videoRef.current) {
       videoRef.current.play();
     }
   };
+
   const handlePause = () => {
     if (videoRef && videoRef.current) {
       videoRef.current.pause();
     }
   };
 
-  //Pause the video when then the endTime matches the currentTime of the playing video
+  // Pause the video when the endTime matches the currentTime of the playing video
   const handlePauseVideo = (e) => {
     const currentTime = Math.floor(e.currentTarget.currentTime);
 
@@ -147,18 +147,14 @@ function App() {
     }
   };
 
-  //Trim functionality of the video
+  // Trim functionality of the video
   const handleTrim = async () => {
     if (isScriptLoaded) {
       const { name, type } = videoFileValue;
-      //Write video to memory
-      ffmpeg.FS(
-        "writeFile",
-        name,
-        await window.FFmpeg.fetchFile(videoFileValue)
-      );
+      // Write video to memory
+      ffmpeg.FS("writeFile", name, await fetchFile(videoFileValue));
       const videoFileType = type.split("/")[1];
-      //Run the ffmpeg command to trim video
+      // Run the ffmpeg command to trim the video
       await ffmpeg.run(
         "-i",
         name,
@@ -172,7 +168,7 @@ function App() {
         "copy",
         `out.${videoFileType}`
       );
-      //Convert data to url and store in videoTrimmedUrl state
+      // Convert data to a URL and store it in the videoTrimmedUrl state
       const data = ffmpeg.FS("readFile", `out.${videoFileType}`);
       const url = URL.createObjectURL(
         new Blob([data.buffer], { type: videoFileValue.type })
