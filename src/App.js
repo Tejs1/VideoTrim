@@ -1,28 +1,28 @@
-import React, { useEffect, useRef, useState } from 'react';
-import Nouislider from 'nouislider-react';
-import 'nouislider/distribute/nouislider.css';
-import './App.css';
+import React, { useEffect, useRef, useState } from "react";
+import Nouislider from "nouislider-react";
+import "nouislider/distribute/nouislider.css";
+import "./App.css";
 
 let ffmpeg; //Store the ffmpeg instance
 function App() {
   const [videoDuration, setVideoDuration] = useState(0);
   const [endTime, setEndTime] = useState(0);
   const [startTime, setStartTime] = useState(0);
-  const [videoSrc, setVideoSrc] = useState('');
-  const [videoFileValue, setVideoFileValue] = useState('');
+  const [videoSrc, setVideoSrc] = useState("");
+  const [videoFileValue, setVideoFileValue] = useState("");
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
-  const [videoTrimmedUrl, setVideoTrimmedUrl] = useState('');
+  const [videoTrimmedUrl, setVideoTrimmedUrl] = useState("");
   const videoRef = useRef();
   let initialSliderValue = 0;
 
   //Created to load script by passing the required script and append in head tag
   const loadScript = (src) => {
     return new Promise((onFulfilled, _) => {
-      const script = document.createElement('script');
+      const script = document.createElement("script");
       let loaded;
-      script.async = 'async';
-      script.defer = 'defer';
-      script.setAttribute('src', src);
+      script.async = "async";
+      script.defer = "defer";
+      script.setAttribute("src", src);
       script.onreadystatechange = script.onload = () => {
         if (!loaded) {
           onFulfilled(script);
@@ -30,9 +30,9 @@ function App() {
         loaded = true;
       };
       script.onerror = function () {
-        console.log('Script failed to load');
+        console.log("Script failed to load");
       };
-      document.getElementsByTagName('head')[0].appendChild(script);
+      document.getElementsByTagName("head")[0].appendChild(script);
     });
   };
 
@@ -52,20 +52,20 @@ function App() {
     let seconds = secNum - hours * 3600 - minutes * 60;
 
     if (hours < 10) {
-      hours = '0' + hours;
+      hours = "0" + hours;
     }
     if (minutes < 10) {
-      minutes = '0' + minutes;
+      minutes = "0" + minutes;
     }
     if (seconds < 10) {
-      seconds = '0' + seconds;
+      seconds = "0" + seconds;
     }
     let time;
     // only mm:ss
-    if (hours === '00') {
-      time = minutes + ':' + seconds;
+    if (hours === "00") {
+      time = minutes + ":" + seconds;
     } else {
-      time = hours + ':' + minutes + ':' + seconds;
+      time = hours + ":" + minutes + ":" + seconds;
     }
     return time;
   };
@@ -73,9 +73,9 @@ function App() {
   useEffect(() => {
     //Load the ffmpeg script
     loadScript(
-      'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.2/dist/ffmpeg.min.js',
+      "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.2/dist/ffmpeg.min.js"
     ).then(() => {
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         // creates a ffmpeg instance.
         ffmpeg = window.FFmpeg.createFFmpeg({ log: true });
         //Load ffmpeg.wasm-core script
@@ -99,7 +99,7 @@ function App() {
 
   //Called when handle of the nouislider is being dragged
   const updateOnSliderChange = (values, handle) => {
-    setVideoTrimmedUrl('');
+    setVideoTrimmedUrl("");
     let readValue;
     if (handle) {
       readValue = values[handle] | 0;
@@ -124,6 +124,11 @@ function App() {
       videoRef.current.play();
     }
   };
+  const handlePause = () => {
+    if (videoRef && videoRef.current) {
+      videoRef.current.pause();
+    }
+  };
 
   //Pause the video when then the endTime matches the currentTime of the playing video
   const handlePauseVideo = (e) => {
@@ -140,29 +145,29 @@ function App() {
       const { name, type } = videoFileValue;
       //Write video to memory
       ffmpeg.FS(
-        'writeFile',
+        "writeFile",
         name,
-        await window.FFmpeg.fetchFile(videoFileValue),
+        await window.FFmpeg.fetchFile(videoFileValue)
       );
-      const videoFileType = type.split('/')[1];
+      const videoFileType = type.split("/")[1];
       //Run the ffmpeg command to trim video
       await ffmpeg.run(
-        '-i',
+        "-i",
         name,
-        '-ss',
+        "-ss",
         `${convertToHHMMSS(startTime)}`,
-        '-to',
+        "-to",
         `${convertToHHMMSS(endTime)}`,
-        '-acodec',
-        'copy',
-        '-vcodec',
-        'copy',
-        `out.${videoFileType}`,
+        "-acodec",
+        "copy",
+        "-vcodec",
+        "copy",
+        `out.${videoFileType}`
       );
       //Convert data to url and store in videoTrimmedUrl state
-      const data = ffmpeg.FS('readFile', `out.${videoFileType}`);
+      const data = ffmpeg.FS("readFile", `out.${videoFileType}`);
       const url = URL.createObjectURL(
-        new Blob([data.buffer], { type: videoFileValue.type }),
+        new Blob([data.buffer], { type: videoFileValue.type })
       );
       setVideoTrimmedUrl(url);
     }
@@ -189,10 +194,11 @@ function App() {
             onUpdate={updateOnSliderChange}
           />
           <br />
-          Start duration: {convertToHHMMSS(startTime)} &nbsp; End duration:{' '}
+          Start duration: {convertToHHMMSS(startTime)} &nbsp; End duration:{" "}
           {convertToHHMMSS(endTime)}
           <br />
           <button onClick={handlePlay}>Play</button> &nbsp;
+          <button onClick={handlePause}>Play</button> &nbsp;
           <button onClick={handleTrim}>Trim</button>
           <br />
           {videoTrimmedUrl && (
@@ -202,7 +208,7 @@ function App() {
           )}
         </React.Fragment>
       ) : (
-        ''
+        ""
       )}
     </div>
   );
